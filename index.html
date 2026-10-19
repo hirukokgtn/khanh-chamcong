@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chấm công và tính lương</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js" defer></script>
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+<main class="app">
+    <div class="wrap">
+
+        <!-- ===== Tiêu đề trang ===== -->
+        <header class="top">
+            <div>
+                <div class="eyebrow">PERSONAL TRACKER</div>
+                <h1 id="mainTitle">Chấm công</h1>
+            </div>
+            <div class="date-now" id="todayLabel"></div>
+        </header>
+
+        <!-- ===== Chọn người chấm công ===== -->
+        <section class="card people-card">
+            <h2>Nhân viên / người chấm công</h2>
+            <p class="sub">Thêm, đổi tên hoặc xóa người. Dữ liệu chấm công được tách riêng theo từng người.</p>
+
+            <div class="peoplebar">
+                <div class="field">
+                    <label for="personSelect">Người đang chọn</label>
+                    <select id="personSelect"></select>
+                </div>
+                <div class="people-actions">
+                    <button class="ghost" id="addPerson" type="button">+ Thêm</button>
+                    <button class="ghost" id="renamePerson" type="button">Sửa tên</button>
+                    <button class="danger" id="deletePerson" type="button">Xóa</button>
+                </div>
+            </div>
+        </section>
+
+        <div class="layout">
+
+            <!-- ===== Form ghi nhận ngày công ===== -->
+            <section class="card">
+                <h2>Ghi nhận ngày công</h2>
+                <p class="sub">Chấm công ngày thường, ghi nhận Chủ nhật và nhập số giờ tăng ca.</p>
+
+                <div class="field">
+                    <label for="workDate">Ngày ghi nhận</label>
+                    <input id="workDate" type="date">
+                </div>
+
+                <div id="sundayNotice" class="warning hidden">
+                    Ngày đã chọn là Chủ nhật. Ngày này không tính công thường; hãy nhập số giờ làm Chủ nhật.
+                </div>
+
+                <div class="field" role="radiogroup" aria-labelledby="workTypeLabel">
+                    <span class="label" id="workTypeLabel">Loại ghi nhận</span>
+                    <div class="choices">
+                        <div class="choice">
+                            <input type="radio" id="full" name="workType" value="1" checked>
+                            <label for="full">
+                                <span class="symbol">☀️</span>
+                                <span>
+                                    <strong>Cả ngày</strong>
+                                    <small>1 công thường</small>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="choice">
+                            <input type="radio" id="half" name="workType" value="0.5">
+                            <label for="half">
+                                <span class="symbol">🌤️</span>
+                                <span>
+                                    <strong>Nửa ngày</strong>
+                                    <small>0,5 công thường</small>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="sundayHours">Số giờ làm Chủ nhật</label>
+                    <input id="sundayHours" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Ví dụ: 8">
+                    <span class="hint">Tiền Chủ nhật tự tính theo lương giờ cơ bản × 200%; quy ước 8 giờ/ngày. Chủ nhật không cộng vào công thường.</span>
+                </div>
+
+                <div class="field">
+                    <label for="overtimeHours">Số giờ tăng ca (nếu có)</label>
+                    <input id="overtimeHours" type="number" min="0" step="0.5" inputmode="decimal" placeholder="Ví dụ: 2,5">
+                    <span class="hint">Tiền tăng ca tự tính theo lương giờ cơ bản × 150%. Quy ước 8 giờ/ngày; có thể điều chỉnh hệ số sau nếu công ty áp dụng mức khác.</span>
+                </div>
+
+                <div class="field">
+                    <label for="note">Ghi chú <span class="optional">(không bắt buộc)</span></label>
+                    <input id="note" maxlength="120" placeholder="Ví dụ: làm buổi sáng, tăng ca dự án...">
+                </div>
+
+                <button class="primary" id="saveBtn" type="button">+ Lưu chấm công</button>
+                <p class="notice">Mỗi ngày có một bản ghi tổng hợp. Lưu lại cùng ngày sẽ cập nhật toàn bộ thông tin của ngày đó.</p>
+            </section>
+
+            <!-- ===== Tổng quan tháng ===== -->
+            <aside class="card">
+                <h2>Tổng quan tháng</h2>
+                <p class="sub" id="summaryMonth">Thống kê ngày công trong tháng đang chọn.</p>
+
+                <div class="stats">
+                    <div class="stat">
+                        <span>Công thường</span>
+                        <strong id="totalWork">0</strong>
+                    </div>
+                    <div class="stat">
+                        <span>Cả ngày</span>
+                        <strong id="fullDays">0</strong>
+                    </div>
+                    <div class="stat">
+                        <span>Nửa ngày</span>
+                        <strong id="halfDays">0</strong>
+                    </div>
+                </div>
+
+                <div class="progress-row">
+                    <span>Tiến độ ngày công tiêu chuẩn</span>
+                    <strong id="progressLabel">0%</strong>
+                </div>
+                <div class="progress">
+                    <div id="progressBar"></div>
+                </div>
+
+                <div class="money-grid">
+                    <div class="money-stat">
+                        <span>Lương cơ bản dự kiến</span>
+                        <strong id="baseSalary" class="money">0 đ</strong>
+                    </div>
+                    <div class="money-stat">
+                        <span>Tiền tăng ca</span>
+                        <strong id="overtimeTotal" class="money">0 đ</strong>
+                    </div>
+                    <div class="money-stat">
+                        <span>Tiền làm Chủ nhật</span>
+                        <strong id="sundayTotal" class="money">0 đ</strong>
+                    </div>
+                    <div class="money-stat total">
+                        <span>Tổng lương dự kiến</span>
+                        <strong id="salaryTotal" class="money">0 đ</strong>
+                    </div>
+                </div>
+
+                <p class="notice" id="salaryNote">
+                    Lương tháng chuẩn: 6.000.000đ. Lương cơ bản = lương tháng ÷ số ngày làm việc tiêu chuẩn (thứ Hai–thứ Bảy) × công thường thực tế. Khoản tăng ca và Chủ nhật tính riêng.
+                </p>
+            </aside>
+        </div>
+
+        <!-- ===== Lịch sử chấm công ===== -->
+        <section class="history-section">
+            <div class="monthbar">
+                <h2>Lịch sử chấm công</h2>
+                <input id="monthFilter" type="month" aria-label="Lọc theo tháng">
+            </div>
+
+            <div class="exportbar">
+                <button class="export-main" id="exportMonth" type="button">⇩ Xuất tháng đang chọn (.xlsx)</button>
+                <button class="export-alt" id="exportAll" type="button">Xuất toàn bộ dữ liệu (.xlsx)</button>
+            </div>
+
+            <div id="history" class="history"></div>
+
+            <p class="foot">
+                File Excel (.xlsx) mở được bằng Microsoft Excel; với Google Sheets, hãy tải file lên Google Drive hoặc chọn Tệp → Nhập. Dữ liệu chấm công vẫn được lưu trên trình duyệt của thiết bị này.
+            </p>
+        </section>
+
+    </div>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+</body>
+</html>
